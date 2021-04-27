@@ -1,0 +1,57 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r, results=FALSE,warning=FALSE,message=FALSE}
+library(wbstats)
+library(tidyverse)
+```
+
+```{r}
+datos_bm <- wb_data(indicator = c("NY.ADJ.NNTY.PC.KD", "SP.DYN.LE00.IN"),
+start_date = 2000, end_date = 2020,
+return_wide = FALSE)
+```
+
+```{r}
+paises_bm <- wb_countries()
+```
+
+```{r}
+variables    = c('iso3c', 'region', 'income_level')
+paises_bm = paises_bm[,(names(paises_bm)%in%variables)]
+```
+
+```{r}
+datos_bm <- left_join(datos_bm, paises_bm, by = "iso3c")
+```
+
+```{r}
+datos_bm <- datos_bm %>% 
+  mutate(indicator_id = recode(indicator_id, "NY.ADJ.NNTY.PC.KD" = 
+"ing_nac_ajustado", "SP.DYN.LE00.IN" = "expectativa_vida"))
+```
+
+```{r}
+datos_bm_limpios <- pivot_wider(datos_bm, id_cols = c(indicator, iso2c, iso3c, country, date, region, income_level), names_from = indicator_id)
+```
+
+```{r}
+head(datos_bm_limpios)
+datos_bm_limpios_org <- datos_bm_limpios
+datos_bm_limpios_org <- datos_bm_limpios_org %>% 
+  select(starts_with(c( "region", "income_level", "country", "date", "ing_nac_ajustado", "expectativa_vida")))
+```
+
+```{r}
+principales    = c( "region", "income_level", "country", "date", "ing_nac_ajustado", "expectativa_vida")
+bm_principales = datos_bm_limpios_org[,(names(datos_bm_limpios_org)%in%principales)]
+```
+
+
+
+
+
+
+
