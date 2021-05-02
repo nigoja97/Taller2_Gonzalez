@@ -6,37 +6,48 @@ output: html_notebook
 ```{r, results=FALSE,warning=FALSE,message=FALSE}
 library(wbstats)
 library(tidyverse)
+library(naniar)
+library(lubridate)
+library(scales)
+library(ggthemes)
 ```
 
+3.
 ```{r}
 datos_bm <- wb_data(indicator = c("NY.ADJ.NNTY.PC.KD", "SP.DYN.LE00.IN"),
 start_date = 2000, end_date = 2020,
 return_wide = FALSE)
 ```
 
+4.
 ```{r}
 paises_bm <- wb_countries()
 ```
 
+5.
 ```{r}
 variables    = c('iso3c', 'region', 'income_level')
 paises_bm = paises_bm[,(names(paises_bm)%in%variables)]
 ```
 
+6.
 ```{r}
 datos_bm <- left_join(datos_bm, paises_bm, by = "iso3c")
 ```
 
+7.
 ```{r}
 datos_bm <- datos_bm %>% 
   mutate(indicator_id = recode(indicator_id, "NY.ADJ.NNTY.PC.KD" = 
 "ing_nac_ajustado", "SP.DYN.LE00.IN" = "expectativa_vida"))
 ```
 
+8.
 ```{r}
 datos_bm_limpios <- pivot_wider(datos_bm, id_cols = c(indicator, iso2c, iso3c, country, date, region, income_level), names_from = indicator_id)
 ```
 
+9.
 ```{r}
 head(datos_bm_limpios)
 datos_bm_limpios_org <- datos_bm_limpios
@@ -44,9 +55,113 @@ datos_bm_limpios_org <- datos_bm_limpios_org %>%
   select(starts_with(c( "region", "income_level", "country", "date", "ing_nac_ajustado", "expectativa_vida")))
 ```
 
+10.
 ```{r}
-principales    = c( "region", "income_level", "country", "date", "ing_nac_ajustado", "expectativa_vida")
-bm_principales = datos_bm_limpios_org[,(names(datos_bm_limpios_org)%in%principales)]
+principales <- c( "region", "income_level", "country", "date", "ing_nac_ajustado", "expectativa_vida")
+bm_principales <- datos_bm_limpios_org[,(names(datos_bm_limpios_org)%in%principales)]
+
+vis_miss(bm_principales)
+```
+Las variables que parecen tener más valores faltantes son 'ing_nac_ajustado' y 'expectativa_vida'
+
+11.
+```{r}
+ gg_miss_fct(x = bm_principales, fct = region)
+```
+La región con más datos faltantes es 'East Asia & Pacific', seguida por 'Latin America & Caribean'.
+```{r}
+ gg_miss_fct(x = bm_principales, fct = income_level)
+```
+Al organizarlos por 'income_level', el nivel de ingresos con mayor cantidad de datos faltantes es 'High income' seguido por 'Upper middle income'
+
+```{r}
+Fecha2015 <- bm_principales %>% filter(str_detect(date, "2015")) 
+Fecha2015 <- select(Fecha2015, region, ing_nac_ajustado, expectativa_vida)
+region <- Fecha2015$region[1:217]
+ing_nac_ajustado <- Fecha2015$ing_nac_ajustado[1:217]
+expectativa_vida <- Fecha2015$expectativa_vida[218:434]
+Fecha2015 <- cbind(region,ing_nac_ajustado,expectativa_vida)
+Fecha2015<- na.omit(Fecha2015)
+Fecha2015 <- as.data.frame(Fecha2015)
+Fecha2015$ing_nac_ajustado <- as.numeric(Fecha2015$ing_nac_ajustado)
+Fecha2015$expectativa_vida <- as.numeric(Fecha2015$expectativa_vida)
+
+ggplot(data = Fecha2015,mapping = aes(x = ing_nac_ajustado, 
+y = expectativa_vida,color = region)) + geom_point() +
+scale_x_continuous(
+breaks = seq(from = 0, to = 80000, by = 10000)) +
+scale_y_continuous(
+breaks = seq(from = 10, to = 100, by = 10)) +
+labs(title = "Expectativa de vida frente a ingreso nacional ajustado ", x= "Ingreso nacional ajustado", y= "Expectativa de Vida")+
+theme_solarized_2(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), 
+plot.title = element_text(face = "bold", hjust = 0.5))+  theme(legend.position = "bottom")+theme(legend.background = element_rect(fill="azure",size=0.5, linetype="solid", colour ="green"))
+```
+
+13. 
+```{r,fig.align="center"}
+Colombia <- filter(bm_principales, country == "Colombia")
+
+ggplot(data = Colombia, mapping = aes(x =expectativa_vida, y =date)) + 
+geom_line(color="Pink") + labs(title = "Expectativa de vida en Colombia", x= "Expectativa de Vida", y= "Año")+theme_solarized(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))
+```
+
+La expectativa de vida de los colombianos ha tendido a subir desde el año 2000 hasta el año 2015
+
+14.
+```{r,fig.align="center"}
+Fecha00_15<- bm_principales %>% filter(str_detect(date, pattern = "2000|2015")) 
+Fecha00_15 <- Fecha00_15 %>% select(date, expectativa_vida) %>% na.omit(Fecha00_15)
+
+
+ggplot(Fecha00_15) + 
+  geom_density(aes(x = expectativa_vida, fill = date), position = 'stack')  + 
+  ggtitle("Función de Densidad de la Expectativa de Vida") +
+theme_solarized(light=TRUE)  + scale_colour_solarized('blue')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))+ labs(fill='Año') 
+
+```
+Se entiende que la mayo parte de los datos están entre 70 y 80 años, lo que suguiere que la expectativa de vida de una persona podría estar rondando por estos valores.
+
+15.
+```{r}
+ggplot(data = Fecha2015, mapping = aes(x = expectativa_vida)) + 
+geom_density(color = "pink")+
+facet_wrap(vars(region))+ labs(title = "Expectativa de vida por regiones 2015 ", x= "Expectativa de Vida", y= "Densidad")+
+theme_solarized(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))
+```
+
+16.
+```{r, message=FALSE}
+nombres1 <- list.files(path = 'C:/Users/NIGOJ/Desktop/Nico/Cosas de la U/Programacion/Taller2_Gonzalez/Febrero', pattern = 'Cabecera', full.names = TRUE)
+nombres2 <- list.files(path = 'C:/Users/NIGOJ/Desktop/Nico/Cosas de la U/Programacion/Taller2_Gonzalez/Febrero', pattern = 'Resto', full.names = TRUE)
+
+Cabecera <- list()
+Cabecera <- lapply(nombres1, read.csv2)
+Cabecera1 <- NULL
+Cabecera1 <- bind_rows(Cabecera[[1]],Cabecera[[8]], .id = "SECUENCIA_P")
+
+Resto <- list()
+Resto <- lapply(nombres2, read.csv2)
+Resto1 <- NULL
+Resto1 <- bind_rows(Resto[[1]],Resto[[8]], .id = "SECUENCIA_P")
+```
+
+18.
+```{r}
+covid_19 <- read_csv('https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessT')
+covid_19 <- covid_19 %>% 
+  rename(fecha_reporte ="fecha reporte web") 
+covid_19 <- covid_19 %>% 
+   mutate(fecha_reporte = dmy_hms(fecha_reporte))
+
+covid_19 <- covid_19 %>% 
+  rename(ID_de_caso = "ID de caso")
+
+resumen_casos <- covid_19 %>% 
+  group_by(fecha_reporte) %>% 
+  count(fecha_reporte)
+
+ggplot(mapping = aes(x = unique(covid_19$fecha_reporte), 
+y = resumen_casos)) + geom_line(color = 'red')
 ```
 
 
