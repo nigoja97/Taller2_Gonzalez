@@ -77,9 +77,12 @@ Al organizarlos por 'income_level', el nivel de ingresos con mayor cantidad de d
 ```{r}
 Fecha2015 <- bm_principales %>% filter(str_detect(date, "2015")) 
 Fecha2015 <- select(Fecha2015, region, ing_nac_ajustado, expectativa_vida)
+
 region <- Fecha2015$region[1:217]
+
 ing_nac_ajustado <- Fecha2015$ing_nac_ajustado[1:217]
 expectativa_vida <- Fecha2015$expectativa_vida[218:434]
+
 Fecha2015 <- cbind(region,ing_nac_ajustado,expectativa_vida)
 Fecha2015<- na.omit(Fecha2015)
 Fecha2015 <- as.data.frame(Fecha2015)
@@ -98,11 +101,11 @@ plot.title = element_text(face = "bold", hjust = 0.5))+  theme(legend.position =
 ```
 
 13. 
-```{r,fig.align="center"}
+```{r,fig.align="center",warning=FALSE,message=FALSE}
 Colombia <- filter(bm_principales, country == "Colombia")
 
 ggplot(data = Colombia, mapping = aes(x =expectativa_vida, y =date)) + 
-geom_line(color="Pink") + labs(title = "Expectativa de vida en Colombia", x= "Expectativa de Vida", y= "Año")+theme_solarized(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))
+geom_line(color="green") + labs(title = "Expectativa de vida en Colombia", x= "Expectativa de Vida", y= "Año")+theme_solarized(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))
 ```
 
 La expectativa de vida de los colombianos ha tendido a subir desde el año 2000 hasta el año 2015
@@ -137,13 +140,30 @@ nombres2 <- list.files(path = 'C:/Users/NIGOJ/Desktop/Nico/Cosas de la U/Program
 Cabecera <- list()
 Cabecera <- lapply(nombres1, read.csv2)
 Cabecera1 <- NULL
-Cabecera1 <- bind_rows(Cabecera[[1]],Cabecera[[8]], .id = "SECUENCIA_P")
+Cabecera1 <- bind_rows(Cabecera[[1]],Cabecera[[8]], .id ="SECUENCIA_P")
+Cabecera1 <- bind_rows(Resto, .id ="SECUENCIA_P")
 
 Resto <- list()
 Resto <- lapply(nombres2, read.csv2)
 Resto1 <- NULL
 Resto1 <- bind_rows(Resto[[1]],Resto[[8]], .id = "SECUENCIA_P")
+Resto1 <- bind_rows(Resto, .id = "SECUENCIA_P")
+
+GEIH2021 <- NULL
+GEIH2021 <- bind_rows(Cabecera1,Resto1, .id = "SECUENCIA_P")
 ```
+
+17.
+```{r}
+GEIH2021 <- GEIH2021 %>% 
+  select(c('P6250','P6020','P6440',
+'P7310','P7430','P6125'), everything())
+
+GEIH2021 <- GEIH2021 %>% 
+  mutate(across(.cols = starts_with(c('P6250','P6020','P6440',
+'P7310','P7430','P6125')),~factor(ifelse(.x == "1","Yes","No"))))
+```
+
 
 18.
 ```{r}
