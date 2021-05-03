@@ -66,11 +66,15 @@ Las variables que parecen tener más valores faltantes son 'ing_nac_ajustado' y 
 
 11.
 ```{r}
- gg_miss_fct(x = bm_principales, fct = region)
+ gg_miss_fct(x = bm_principales, fct = region) +
+  labs(x="Regiones", y="Variables") + theme_light()+theme(legend.background = element_rect(fill="azure",size=0.5, linetype="solid", colour ="green"))+ggtitle("Observaciones faltantes por región")+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 La región con más datos faltantes es 'East Asia & Pacific', seguida por 'Latin America & Caribean'.
 ```{r}
- gg_miss_fct(x = bm_principales, fct = income_level)
+ gg_miss_fct(x = bm_principales, fct = income_level)+
+  labs(x="Niveles de ingreso", y="Variables") + theme_light()+theme(legend.background = element_rect(fill="azure",size=0.5, linetype="solid", colour ="green"))+ggtitle("Observaciones faltantes por nivel de ingreso")+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 Al organizarlos por 'income_level', el nivel de ingresos con mayor cantidad de datos faltantes es 'High income' seguido por 'Upper middle income'
 
@@ -96,7 +100,7 @@ breaks = seq(from = 0, to = 80000, by = 10000)) +
 scale_y_continuous(
 breaks = seq(from = 10, to = 100, by = 10)) +
 labs(title = "Expectativa de vida frente a ingreso nacional ajustado ", x= "Ingreso nacional ajustado", y= "Expectativa de Vida")+
-theme_solarized_2(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), 
+theme_light()  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), 
 plot.title = element_text(face = "bold", hjust = 0.5))+  theme(legend.position = "bottom")+theme(legend.background = element_rect(fill="azure",size=0.5, linetype="solid", colour ="green"))
 ```
 
@@ -105,7 +109,7 @@ plot.title = element_text(face = "bold", hjust = 0.5))+  theme(legend.position =
 Colombia <- filter(bm_principales, country == "Colombia")
 
 ggplot(data = Colombia, mapping = aes(x =expectativa_vida, y =date)) + 
-geom_line(color="green") + labs(title = "Expectativa de vida en Colombia", x= "Expectativa de Vida", y= "Año")+theme_solarized(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))
+geom_line(color="green") + labs(title = "Expectativa de vida en Colombia", x= "Expectativa de Vida", y= "Año")+theme_light()  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5),legend.background = element_rect(fill="azure",size=0.5, linetype="solid", colour ="green"))
 ```
 
 La expectativa de vida de los colombianos ha tendido a subir desde el año 2000 hasta el año 2015
@@ -119,7 +123,7 @@ Fecha00_15 <- Fecha00_15 %>% select(date, expectativa_vida) %>% na.omit(Fecha00_
 ggplot(Fecha00_15) + 
   geom_density(aes(x = expectativa_vida, fill = date), position = 'stack')  + 
   ggtitle("Función de Densidad de la Expectativa de Vida") +
-theme_solarized(light=TRUE)  + scale_colour_solarized('blue')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))+ labs(fill='Año') 
+theme_solarized(light=TRUE)  + scale_colour_solarized('blue')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5),legend.background = element_rect(fill="azure",size=0.5, linetype="solid", colour ="green"))+ labs(fill='Año') 
 
 ```
 Se entiende que la mayo parte de los datos están entre 70 y 80 años, lo que suguiere que la expectativa de vida de una persona podría estar rondando por estos valores.
@@ -127,9 +131,9 @@ Se entiende que la mayo parte de los datos están entre 70 y 80 años, lo que su
 15.
 ```{r}
 ggplot(data = Fecha2015, mapping = aes(x = expectativa_vida)) + 
-geom_density(color = "pink")+
+geom_density(color = "black")+
 facet_wrap(vars(region))+ labs(title = "Expectativa de vida por regiones 2015 ", x= "Expectativa de Vida", y= "Densidad")+
-theme_solarized(light=FALSE)  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))
+theme_light()  + scale_colour_solarized('green')+theme(text = element_text(family = "serif"), plot.title = element_text(face = "bold", hjust = 0.5))
 ```
 
 16.
@@ -141,10 +145,10 @@ Cabecera <- list()
 Cabecera <- lapply(nombres1, read.csv2)
 Cabecera1 <- NULL
 Cabecera1 <- bind_rows(Cabecera[[1]],Cabecera[[8]], .id ="SECUENCIA_P")
-Cabecera1 <- bind_rows(Resto, .id ="SECUENCIA_P")
-
 Resto <- list()
 Resto <- lapply(nombres2, read.csv2)
+
+Cabecera1 <- bind_rows(Resto, .id ="SECUENCIA_P")
 Resto1 <- NULL
 Resto1 <- bind_rows(Resto[[1]],Resto[[8]], .id = "SECUENCIA_P")
 Resto1 <- bind_rows(Resto, .id = "SECUENCIA_P")
@@ -180,8 +184,13 @@ resumen_casos <- covid_19 %>%
   group_by(fecha_reporte) %>% 
   count(fecha_reporte)
 
-ggplot(mapping = aes(x = unique(covid_19$fecha_reporte), 
-y = resumen_casos)) + geom_line(color = 'red')
+ggplot(data=resumen_casos,mapping = aes(x = fecha_reporte, 
+y = n))+
+geom_line(color="orange2")+
+scale_y_continuous(
+breaks = seq(from = 0, to = 20000, by = 1000))+
+  labs(x="Niveles de ingreso", y="Variables") + theme_light()+theme(legend.background = element_rect(fill="azure",size=0.5, linetype="solid", colour ="green"))+ggtitle("Observaciones faltantes por nivel de ingreso")+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 
